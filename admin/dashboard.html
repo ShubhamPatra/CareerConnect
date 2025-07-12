@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Dashboard</title>
+  <link rel="stylesheet" href="../public/css/style.css" />
+</head>
+<body>
+  <script>
+    fetch("../admin_api/auth_check.php")
+      .then(res => res.json())
+      .then(data => {
+        if (!data.authenticated) window.location.href = "login.html";
+      });
+  </script>
+
+  <nav>
+    <div id="navbar-container">
+      <div id="navbar-brand">
+        <i class="fas fa-user-shield"></i>
+        <a href="#">Admin Panel</a>
+      </div>
+      <div id="navbar-links" class="navbar">
+        <a href="#" data-target="dashboard">Dashboard</a>
+        <a href="#" data-target="applicants">View Applicants</a>
+        <a href="#" data-target="edit-jobs">Edit Jobs</a>
+        <a href="#" data-target="create-job">Create Job</a>
+        <a href="../admin_api/logout.php">Logout</a>
+      </div>
+    </div>
+  </nav>
+
+  <div id="slider">
+    <section class="page-section" id="dashboard">
+      <div id="dashboard-content">Welcome to the Admin Dashboard!
+        <div class="dashboard-metrics">
+  <h2>Dashboard Stats</h2>
+  <ul>
+    <li>Total Jobs: <span id="stat-total">...</span></li>
+    <li>Open Jobs: <span id="stat-open">...</span></li>
+    <li>Closed Jobs: <span id="stat-closed">...</span></li>
+    <li>Total Applications: <span id="stat-apps">...</span></li>
+  </ul>
+</div>
+
+      </div>
+    </section>
+
+<section class="page-section" id="applicants">
+  <div style="display: flex; justify-content: space-between; align-items: center;">
+    <h2>Applicants</h2>
+    <button onclick="exportApplicants()" class="btn-export">Export CSV</button>
+  </div>
+  <div id="applicants-content">Loading applications...</div>
+</section>
+
+
+    <section class="page-section" id="edit-jobs">
+      <div id="edit-jobs-content">Loading job list...</div>
+    </section>
+
+    <section class="page-section" id="create-job">
+      <div id="create-job-content">
+        <h2>Create New Job</h2>
+          <form id="job-form">
+            <input class="input" type="text" name="title" placeholder="Job Title" required />
+            <input class="input" type="text" name="location" placeholder="Location" required />
+            <input class="input" type="number" name="salary" placeholder="Salary" step="0.01" required />
+            <input class="input" type="text" name="skills" placeholder="Required Skills" required />
+            <textarea class="input" name="description" placeholder="Job Description" required></textarea>
+            <input class="input" type="date" name="deadline" required />
+            <button type="submit" class="btn-apply">Create Job</button>
+            <p id="job-message" style="margin-top:10px;"></p>
+          </form>
+      </div>
+    </section>
+  </div>
+
+  <!-- Edit Job Modal -->
+<div id="edit-job-modal" class="modal hidden">
+  <div class="modal-content">
+    <h2>Edit Job</h2>
+    <form id="edit-job-form">
+      <input type="hidden" name="id" id="edit-id" />
+
+      <label>Title</label>
+      <input type="text" name="title" id="edit-title" required />
+
+      <label>Location</label>
+      <input type="text" name="location" id="edit-location" required />
+
+      <label>Salary</label>
+      <input type="number" name="salary" id="edit-salary" required />
+
+      <label>Skills (comma-separated)</label>
+      <input type="text" name="skills" id="edit-skills" />
+
+      <label>Description</label>
+      <textarea name="description" id="edit-description" rows="4"></textarea>
+
+      <label>Deadline</label>
+      <input type="date" name="deadline" id="edit-deadline" required />
+
+      <div class="modal-actions">
+        <button type="submit">Save Changes</button>
+        <button type="button" onclick="closeEditModal()">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+  <script src="js/admin.js" defer></script>
+</body>
+</html>

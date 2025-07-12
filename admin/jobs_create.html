@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head><title>Create New Job</title></head>
+<body>
+  <h2>Create Job</h2>
+  <form id="jobForm">
+    <input name="title" placeholder="Job Title" required><br>
+    <textarea name="description" placeholder="Job Description" required></textarea><br>
+    <input name="location" placeholder="Location" required><br>
+    <input name="skills" placeholder="Skills (comma-separated)" required><br>
+    <input name="salary" type="number" step="0.01" placeholder="Salary" required><br>
+    <input name="deadline" type="date" required><br>
+    <button type="submit">Add Job</button>
+  </form>
+
+  <p><a href="dashboard.html">← Back to Dashboard</a></p>
+  <div id="message"></div>
+
+  <script>
+    document.getElementById('jobForm').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      const formData = new FormData(this);
+      const res = await fetch('../admin_api/create_job.php', {
+        method: 'POST',
+        body: formData
+      });
+      const result = await res.json();
+      if (result.success) {
+        window.location.href = 'dashboard.html';
+      } else {
+        document.getElementById('message').innerText = result.message;
+      }
+    });
+  </script>
+</body>
+</html>

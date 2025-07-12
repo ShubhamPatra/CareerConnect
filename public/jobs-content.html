@@ -1,0 +1,36 @@
+<div class="container">
+  <h2 class="section-title">All Jobs</h2>
+  <div class="job-list" id="full-job-list">
+    <!-- Job cards will be injected here -->
+  </div>
+</div>
+
+<script>
+  fetch("../backend/get_jobs.php")
+    .then(res => res.json())
+    .then(data => {
+      const list = document.getElementById("full-job-list");
+      if (!list) return;
+
+      if (data.length === 0) {
+        list.innerHTML = "<p>No jobs available right now.</p>";
+        return;
+      }
+
+      data.forEach(job => {
+        list.innerHTML += `
+          <div class="job-card">
+            <div class="job-card-header">
+              <h3 class="job-title">${job.title}</h3>
+              <span class="job-location"><i class="fas fa-map-marker-alt"></i> ${job.location}</span>
+            </div>
+            <p class="job-salary"><i class="fas fa-dollar-sign"></i> ${job.salary}</p>
+            <a href="job_detail.html?id=${job.id}" class="btn-apply">View & Apply</a>
+          </div>
+        `;
+      });
+    })
+    .catch(err => {
+      console.error("Failed to load jobs", err);
+    });
+</script>

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Job Detail</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="job-detail-page">
+    <div class="container" style="max-width: 800px; padding: 2rem;">
+      <a href="index.html">← Back to Jobs</a>
+      <h1 class="section-title" id="job-title">Loading...</h1>
+      <p><strong>Location:</strong> <span id="job-location"></span></p>
+      <p><strong>Salary:</strong> $<span id="job-salary"></span></p>
+      <p><strong>Skills:</strong> <span id="job-skills"></span></p>
+      <p><strong>Description:</strong></p>
+      <p id="job-description"></p>
+
+      <hr />
+
+      <h2>Apply Now</h2>
+      <form id="apply-form" action="../backend/apply.php" method="POST" enctype="multipart/form-data">
+        <input type="hidden" name="job_id" id="job-id" />
+        <div><input class="input" type="text" name="name" placeholder="Your Name" required /></div>
+        <div><input class="input" type="email" name="email" placeholder="Your Email" required /></div>
+        <div><input class="input" type="tel" name="phone" placeholder="Your Phone (optional)" /></div>
+        <div>
+          <label>Upload Resume:</label>
+          <input type="file" name="resume" required />
+        </div>
+        <button type="submit" class="btn-apply">Submit Application</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const jobId = params.get("id");
+
+    if (!jobId) {
+      document.getElementById("job-title").textContent = "Invalid job ID";
+      throw new Error("Missing job ID in URL");
+    }
+
+    fetch(`../backend/get_job.php?id=${jobId}`)
+      .then(res => res.json())
+      .then(job => {
+        console.log("✅ Job loaded:", job);
+
+        if (job.error) {
+          document.getElementById("job-title").textContent = "Job not found.";
+          return;
+        }
+
+        document.getElementById("job-id").value = job.id;
+        document.getElementById("job-title").textContent = job.title;
+        document.getElementById("job-location").textContent = job.location;
+        document.getElementById("job-salary").textContent = job.salary;
+        document.getElementById("job-description").textContent = job.description;
+        document.getElementById("job-skills").textContent = job.skills;
+      })
+      .catch(err => {
+        console.error("❌ Failed to load job:", err);
+        document.getElementById("job-title").textContent = "Failed to load job.";
+      });
+  </script>
+</body>
+</html>
