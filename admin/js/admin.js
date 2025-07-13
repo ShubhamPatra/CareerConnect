@@ -2,6 +2,11 @@ const links = document.querySelectorAll(".navbar a[data-target]");
 const slider = document.getElementById("slider");
 const sections = ["dashboard", "applicants", "edit-jobs", "create-job"];
 
+// Pagination state variables
+let jobsCurrentPage = 1;
+let applicantsCurrentPage = 1;
+const perPage = 12;
+
 // Tab navigation
 links.forEach(link => {
   link.addEventListener("click", e => {
@@ -10,18 +15,31 @@ links.forEach(link => {
     const index = sections.indexOf(target);
     if (index >= 0) {
       slider.style.transform = `translateX(-${index * 100}vw)`;
-      if (target === "applicants") loadApplicants();
-      if (target === "edit-jobs") loadJobs();
+      // Reset pagination state when switching sections
+      if (target === "applicants") {
+        applicantsCurrentPage = 1;
+        loadApplicants();
+      }
+      if (target === "edit-jobs") {
+        jobsCurrentPage = 1;
+        loadJobs();
+      }
     }
   });
 });
 
 // Load applicants
-function loadApplicants() {
-  fetch("../admin_api/get_applicants.php")
+function loadApplicants(page = 1) {
+  applicantsCurrentPage = page;
+  fetch(`../admin_api/get_applicants.php?page=${page}&per_page=${perPage}`)
     .then(res => res.json())
-    .then(apps => {
+    .then(data => {
       const container = document.getElementById("applicants-content");
+      
+      // Handle both paginated and non-paginated responses
+      const apps = data.data || data;
+      const total = data.total || apps.length;
+      
       if (!apps.length) {
         container.innerHTML = "<p>No applications found.</p>";
         return;
@@ -68,7 +86,18 @@ function loadApplicants() {
       });
 
       html += "</tbody></table>";
+      
+      // Add pagination if we have paginated data
+      if (data.total !== undefined) {
+        html += '<div id="applicants-pagination"></div>';
+      }
+      
       container.innerHTML = html;
+      
+      // Render pagination controls
+      if (data.total !== undefined) {
+        renderPagination('applicants-pagination', total, page, perPage, loadApplicants);
+      }
     })
     .catch(() => {
       document.getElementById("applicants-content").innerHTML = "<p>Error loading applications.</p>";
@@ -86,7 +115,7 @@ function updateApplicationStatus(id, status) {
     .then(result => {
       if (result.success) {
         alert(`✅ Application ${status}.`);
-        loadApplicants(); // Refresh table
+        loadApplicants(applicantsCurrentPage); // Preserve current page
       } else {
         alert("❌ Failed to update application.");
       }
@@ -101,11 +130,17 @@ function exportApplicants() {
 
 
 // Load jobs and display with edit/delete
-function loadJobs() {
-  fetch("../admin_api/get_jobs.php")
+function loadJobs(page = 1) {
+  jobsCurrentPage = page;
+  fetch(`../admin_api/get_jobs.php?page=${page}&per_page=${perPage}`)
     .then(res => res.json())
-    .then(jobs => {
+    .then(data => {
       const container = document.getElementById("edit-jobs-content");
+      
+      // Handle both paginated and non-paginated responses
+      const jobs = data.data || data;
+      const total = data.total || jobs.length;
+      
       if (!jobs.length) {
         container.innerHTML = "<p>No jobs posted yet.</p>";
         return;
@@ -147,7 +182,18 @@ function loadJobs() {
       });
 
       html += "</tbody></table>";
+      
+      // Add pagination if we have paginated data
+      if (data.total !== undefined) {
+        html += '<div id="jobs-pagination"></div>';
+      }
+      
       container.innerHTML = html;
+      
+      // Render pagination controls
+      if (data.total !== undefined) {
+        renderPagination('jobs-pagination', total, page, perPage, loadJobs);
+      }
     })
     .catch(() => {
       document.getElementById("edit-jobs-content").innerHTML = "<p>Error loading jobs.</p>";
@@ -165,7 +211,7 @@ function closeJob(id) {
     .then(result => {
       if (result.success) {
         alert("✅ Job closed.");
-        loadJobs(); // Refresh list to remove the button
+        loadJobs(jobsCurrentPage); // Preserve current page
       } else {
         alert("❌ Failed to close job.");
       }
@@ -216,7 +262,7 @@ document.getElementById("edit-job-form").addEventListener("submit", function (e)
       if (result.success) {
         alert("✅ Job updated successfully.");
         closeEditModal();
-        loadJobs();
+        loadJobs(jobsCurrentPage); // Preserve current page
       } else {
         alert("❌ Failed to update job.");
       }
@@ -238,7 +284,7 @@ function deleteJob(id) {
     .then(result => {
       if (result.success) {
         alert("🗑 Job deleted.");
-        loadJobs();
+        loadJobs(jobsCurrentPage); // Preserve current page
       } else {
         alert("❌ Failed to delete job.");
       }
@@ -266,7 +312,7 @@ document.addEventListener("DOMContentLoaded", () => {
             msg.style.color = "green";
             msg.textContent = "✅ Job created successfully!";
             jobForm.reset();
-            loadJobs();
+            loadJobs(jobsCurrentPage); // Preserve current page
           } else {
             msg.style.color = "red";
             msg.textContent = "❌ Failed to create job.";
@@ -282,6 +328,62 @@ document.addEventListener("DOMContentLoaded", () => {
 
   loadDashboardStats(); // Also load stats
 });
+
+// Shared pagination function
+function renderPagination(containerId, total, currentPage, perPage, loadFunction) {
+  const totalPages = Math.ceil(total / perPage);
+  const container = document.getElementById(containerId);
+  
+  if (totalPages <= 1) {
+    container.innerHTML = '';
+    return;
+  }
+  
+  let html = '<div class="pagination">';
+  
+  // Previous button
+  if (currentPage > 1) {
+    html += `<button class="pagination-btn" onclick="${loadFunction.name}(${currentPage - 1})">Previous</button>`;
+  } else {
+    html += `<button class="pagination-btn disabled" disabled>Previous</button>`;
+  }
+  
+  // Page numbers
+  const startPage = Math.max(1, currentPage - 2);
+  const endPage = Math.min(totalPages, currentPage + 2);
+  
+  if (startPage > 1) {
+    html += `<button class="pagination-btn" onclick="${loadFunction.name}(1)">1</button>`;
+    if (startPage > 2) {
+      html += `<span class="pagination-ellipsis">...</span>`;
+    }
+  }
+  
+  for (let i = startPage; i <= endPage; i++) {
+    const activeClass = i === currentPage ? ' active' : '';
+    html += `<button class="pagination-btn${activeClass}" onclick="${loadFunction.name}(${i})">${i}</button>`;
+  }
+  
+  if (endPage < totalPages) {
+    if (endPage < totalPages - 1) {
+      html += `<span class="pagination-ellipsis">...</span>`;
+    }
+    html += `<button class="pagination-btn" onclick="${loadFunction.name}(${totalPages})">${totalPages}</button>`;
+  }
+  
+  // Next button
+  if (currentPage < totalPages) {
+    html += `<button class="pagination-btn" onclick="${loadFunction.name}(${currentPage + 1})">Next</button>`;
+  } else {
+    html += `<button class="pagination-btn disabled" disabled>Next</button>`;
+  }
+  
+  // Page info
+  html += `<span class="pagination-info">Page ${currentPage} of ${totalPages} (${total} total)</span>`;
+  
+  html += '</div>';
+  container.innerHTML = html;
+}
 
 // Load dashboard stats
 function loadDashboardStats() {

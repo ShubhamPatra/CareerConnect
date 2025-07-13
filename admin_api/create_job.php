@@ -1,5 +1,6 @@
 <?php
 require '../includes/db.php';
+require 'auth_check.php';
 header('Content-Type: application/json');
 
 $data = json_decode(file_get_contents("php://input"), true);
